@@ -29,7 +29,7 @@ struct list {
 
 
 struct list* create_list();
-void list_push(struct list* l, void* data);
+int list_push(struct list* l, void* data);
 void* list_pop(struct list* l);
 
 struct ring_buf* create_ring_buf();
