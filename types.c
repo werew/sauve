@@ -6,7 +6,7 @@ struct list* create_list(){
     return l;
 }
 
-void* list_push(struct list* l, void* data){
+void list_push(struct list* l, void* data){
     struct cell* new = malloc(sizeof(struct cell)); 
     if (new == -1) return NULL;
     
@@ -15,8 +15,6 @@ void* list_push(struct list* l, void* data){
 
     if (l->head == NULL) l->head = new;
     l->foot = next;
-
-    return data;
 }
 
 void* list_pop(struct list* l){
@@ -30,4 +28,34 @@ void* list_pop(struct list* l){
     return data;
 }
 
+struct ring_buf* create_ring_buf(unsigned int max_elements){
+    size_t s = sizeof(struct ring_buf) + sizeof(void*) * max_elements;
+    struct ring_buf* rb = calloc(1,s);
+    if (rb == NULL) return NULL;
 
+    rb->max = max_elements;
+    return rb;
+}
+
+void ring_buf_push(struct ring_buf* rb, void* data){
+    if (rb->total >= rb->max){
+        // TODO
+        printf("wait to push\n");
+    }
+    int n = (rb->first+rb->total) % rb->max;
+    rb->buf[n] = data;
+    rb->total++;
+}
+
+
+void* ring_buf_pop(struct ring_buf* rb){
+    if (rb->total == 0){
+        // TODO ???
+        printf("wait to pop\n");
+    }
+
+    void* data = rb->buf[rb->first];
+    rb->first = (rb->first+1) % rb->max;
+
+    return data;
+}

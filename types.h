@@ -5,11 +5,11 @@
 /**
  * Ring buffer
  */
-#define MAX_BUF_ENTRIES 100
 struct ring_buf {
-    void* buf[MAX_BUF_ENTRIES]; 
-    int first;
-    int last;
+    unsigned int first;
+    unsigned int total;
+    unsigned int max;
+    void* buf[];
 }
 
 
@@ -29,8 +29,12 @@ struct list {
 
 
 struct list* create_list();
-void* list_push(struct list* l, void* data);
+void list_push(struct list* l, void* data);
 void* list_pop(struct list* l);
+
+struct ring_buf* create_ring_buf();
+void ring_buf_push(struct ring_buf* rb, void* data);
+void* ring_buf_pop(struct ring_buf* rb);
 
 
 #endif
