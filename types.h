@@ -10,7 +10,7 @@ struct ring_buf {
     unsigned int total;
     unsigned int max;
     void* buf[];
-}
+};
 
 
 /**
@@ -19,12 +19,12 @@ struct ring_buf {
 struct cell {
     void* data;
     struct cell* next;
-}
+};
 
 struct list {
     struct cell* head;
     struct cell* foot;
-}
+};
 
 
 
