@@ -1,12 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <errno.h>
+#include "types.h"
+#include "common.h"
+#include "scanner.h"
 
 void usage(char* name, int exit_value){
     printf("usage: %s [-h] [-n] [-s n] [-a n] [-f n] "
            "source [previous] destination\n",name);
     exit(exit_value);
 }
+
 
 int main(int argc, char* argv[]){
     // Default values
@@ -48,7 +54,8 @@ int main(int argc, char* argv[]){
             break ;
         default : usage(argv[0], 1);
     }
-        
     
+    launch_scanners(n_scanners, source);
+   
     return 0;
 }
