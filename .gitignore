@@ -34,3 +34,7 @@
 
 # Vim swap files
 *.swp
+
+# Folders
+obj/
+bin/
