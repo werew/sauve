@@ -6,8 +6,9 @@
 #include "types.h"
 
 void* scanner(void* arg){
+    signal_term();    
     printf("Hello %s\n",(char*)arg);
-    return NULL;
+    return (void*) 0; 
 }
 
 void launch_scanners(unsigned int n_scanners, const char* source){

@@ -16,8 +16,11 @@ void usage(char* name, int exit_value){
 void init_env
 (unsigned int n_scanners, unsigned int n_analyzers, 
  unsigned int max_buff_entries, unsigned int debug){
-    term_queue = create_list(); 
-    if (term_queue == NULL) fail("init term_queue");
+
+    pthread_mutex_init(&term_queue.mutex, NULL);
+    pthread_cond_init(&term_queue.push_cond, NULL);
+    term_queue.list = create_list(); 
+    if (term_queue.list == NULL) fail("init term_queue");
 
     folders_queue = create_list(); 
     if (folders_queue == NULL) fail("init folders_queue");
@@ -72,6 +75,23 @@ int main(int argc, char* argv[]){
     init_env(n_scanners, n_analyzers, max_buff_entries, debug);
     
     launch_scanners(n_scanners, source);
+
+    // Join threads
+    unsigned int n_threads = n_scanners ; // XXX + n_analyzers;
+    unsigned int n_joined  = 0;
+    while (n_joined < n_threads){
+        PT_CHK(pthread_mutex_lock(&term_queue.mutex));
+
+        pthread_t* thread;
+        while ((thread = list_pop(term_queue.list)) == NULL){
+            pthread_cond_wait(&term_queue.push_cond, &term_queue.mutex);
+        }
+
+        PT_CHK(pthread_mutex_unlock(&term_queue.mutex));
+        PT_CHK(pthread_join(*thread, NULL));
+        free(thread);
+        n_joined++;
+    }
    
     return 0;
 }

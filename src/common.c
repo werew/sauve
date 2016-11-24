@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <pthread.h>
 #include "types.h"
 
 #define _COMMON_C_
@@ -12,11 +13,16 @@ void _fail(const char* msg, int line, const char* func){
     exit(EXIT_FAILURE);
 }
 
-void exit_thread(void* ret){
+void signal_term(){
     pthread_t* thread = malloc(sizeof(pthread_t));
     if (thread == NULL) fail("malloc");
     *thread = pthread_self();
-    list_push(term_queue, thread); 
-    pthread_exit(ret);
+
+    PT_CHK(pthread_mutex_lock(&term_queue.mutex));
+
+    if (list_push(term_queue.list, thread) == -1) fail("list_push");
+    pthread_cond_signal(&term_queue.push_cond);
+
+    PT_CHK(pthread_mutex_unlock(&term_queue.mutex));
 }
 

@@ -15,7 +15,8 @@ int list_push(struct list* l, void* data){
     new->next = NULL;
 
     if (l->head == NULL) l->head = new;
-    l->foot->next = new;
+    if (l->foot != NULL) l->foot->next = new;
+
     l->foot = new;
 
     return 0;
@@ -26,6 +27,8 @@ void* list_pop(struct list* l){
     if (h == NULL) return NULL;
 
     l->head = h->next;
+    if (l->foot == h) l->foot = h->next;
+
     void* data = h->data; 
     free(h);
 
