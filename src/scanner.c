@@ -37,9 +37,42 @@
 
 
 */
+
+char* pop_folder(){
+    
+    PT_CHK(pthread_mutex_lock(&folders_queue.mutex))
+
+    // This scanner is looking for a folder, so it's not active
+    folders_queue.active_threads--;
+
+    // Get a folder or wait to get one
+    char* folder;
+    while((folder = list_pop(folders_queue.list)) == NULL && 
+           folders_queue.active_threads > 0){
+        pthread_cond_wait(&folders_queue.pt_cond, &folders_queue.mutex);
+    }
+
+    if (folder == NULL) {
+        // Didn't get a folder: there are no active scanners
+        // Notify all the scanners.
+        pthread_cond_broadcast(&folders_queue.pt_cond);
+    } else {
+        // Got a folder: this scanner is now active
+        folders_queue.active_threads++;
+    }
+
+    PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))
+
+    return folder;
+}
+
 void* scanner(void* arg){
+    // Get a folder
+    char* folder;
+    while ((folder = pop_folder()) != NULL){
+        printf("%s\n",folder);
+    }
     signal_term();    
-    printf("Hello %s\n",(char*)arg);
     return (void*) 0; 
 }
 
