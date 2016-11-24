@@ -22,8 +22,11 @@ void init_env
     term_queue.list = create_list(); 
     if (term_queue.list == NULL) fail("init term_queue");
 
-    folders_queue = create_list(); 
-    if (folders_queue == NULL) fail("init folders_queue");
+    folders_queue.active_threads = n_scanners;
+    pthread_mutex_init(&folders_queue.mutex, NULL);
+    pthread_cond_init(&folders_queue.pt_cond, NULL);
+    folders_queue.list = create_list(); 
+    if (folders_queue.list == NULL) fail("init folders_queue");
 
     files_queue = create_ring_buf(max_buff_entries);
     

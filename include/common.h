@@ -12,13 +12,20 @@
 
 _EXTERN_ int debug_opt;
 
-_EXTERN_ struct _sterm {
+_EXTERN_ struct {
     struct list* list;
-    pthread_mutex_t mutex;      // Guarantee safe write/read access 
+    pthread_mutex_t mutex;      // Guarantees safe write/read access 
     pthread_cond_t  push_cond;  // Dispatched when a new thread has been pushed
 } term_queue;
 
-_EXTERN_ struct list* folders_queue;
+_EXTERN_ struct {
+    struct list* list;
+    unsigned int active_threads;
+    pthread_mutex_t mutex;      // Guarantees safe write/read access 
+    pthread_cond_t pt_cond;     // Dispatched when a new folder is available or
+                                // if no more folders need to be processed
+} folders_queue;
+    
 _EXTERN_ struct ring_buf* files_queue;
 
 #define fail(x) _fail(x, __LINE__, __func__)
