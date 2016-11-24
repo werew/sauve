@@ -9,3 +9,12 @@ void _fail(const char* msg, int line, const char* func){
     perror(msg);
     exit(EXIT_FAILURE);
 }
+
+void exit_thread(void* ret){
+    pthread_t* thread = malloc(sizeof(pthread_t));
+    if (thread == NULL) fail("malloc");
+    *thread = pthread_self();
+    list_push(term_queue, thread); 
+    pthread_exit(ret);
+}
+
