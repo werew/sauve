@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "types.h"
+
+#define _COMMON_C_
 #include "common.h"
 
 void _fail(const char* msg, int line, const char* func){

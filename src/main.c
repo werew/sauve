@@ -13,6 +13,20 @@ void usage(char* name, int exit_value){
     exit(exit_value);
 }
 
+void init_env
+(unsigned int n_scanners, unsigned int n_analyzers, 
+ unsigned int max_buff_entries, unsigned int debug){
+    term_queue = create_list(); 
+    if (term_queue == NULL) fail("init term_queue");
+
+    folders_queue = create_list(); 
+    if (folders_queue == NULL) fail("init folders_queue");
+
+    files_queue = create_ring_buf(max_buff_entries);
+    
+    debug_opt = debug; 
+}
+
 
 int main(int argc, char* argv[]){
     // Default values
@@ -54,6 +68,8 @@ int main(int argc, char* argv[]){
             break ;
         default : usage(argv[0], 1);
     }
+
+    init_env(n_scanners, n_analyzers, max_buff_entries, debug);
     
     launch_scanners(n_scanners, source);
    
