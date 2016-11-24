@@ -14,7 +14,7 @@ void usage(char* name, int exit_value){
 }
 
 void init_env
-(unsigned int n_scanners, unsigned int n_analyzers, 
+(unsigned int n_scanners, const char* source, unsigned int n_analyzers,
  unsigned int max_buff_entries, unsigned int debug){
 
     pthread_mutex_init(&term_queue.mutex, NULL);
@@ -27,6 +27,8 @@ void init_env
     pthread_cond_init(&folders_queue.pt_cond, NULL);
     folders_queue.list = create_list(); 
     if (folders_queue.list == NULL) fail("init folders_queue");
+    if (list_push(folders_queue.list, source) == -1)
+        fail("push folders_queue");
 
     files_queue = create_ring_buf(max_buff_entries);
     
@@ -34,7 +36,7 @@ void init_env
 }
 
 
-int main(int argc, char* argv[]){
+int main(int argc, const char* argv[]){
     // Default values
     unsigned int n_scanners  = 1, 
                  n_analyzers = 1, 
@@ -75,7 +77,7 @@ int main(int argc, char* argv[]){
         default : usage(argv[0], 1);
     }
 
-    init_env(n_scanners, n_analyzers, max_buff_entries, debug);
+    init_env(n_scanners, source, n_analyzers, max_buff_entries, debug);
     
     launch_scanners(n_scanners, source);
 
