@@ -14,24 +14,36 @@ void usage(char* name, int exit_value){
 }
 
 void init_env
-(unsigned int n_scanners, const char* source, unsigned int n_analyzers,
+(unsigned int n_scanners, char* source, unsigned int n_analyzers,
  unsigned int max_buff_entries, unsigned int debug){
 
+    // Step 1:  init term_queue
     pthread_mutex_init(&term_queue.mutex, NULL);
     pthread_cond_init(&term_queue.push_cond, NULL);
     term_queue.list = create_list(); 
     if (term_queue.list == NULL) fail("init term_queue");
 
+    // Step 2:  init folders_queue
     folders_queue.active_threads = n_scanners;
     pthread_mutex_init(&folders_queue.mutex, NULL);
     pthread_cond_init(&folders_queue.pt_cond, NULL);
     folders_queue.list = create_list(); 
     if (folders_queue.list == NULL) fail("init folders_queue");
-    if (list_push(folders_queue.list, source) == -1)
+
+    // Add source folder
+    size_t s = strlen(source);
+    char* first_folder = malloc(s);
+    if (first_folder == NULL) fail("malloc");
+
+    memcpy(first_folder,source, s);
+
+    if (list_push(folders_queue.list, first_folder) == -1)
         fail("push folders_queue");
 
+    // Step 3: init files_queue
     files_queue = create_ring_buf(max_buff_entries);
-    
+   
+    // Step 4: set debug_opt
     debug_opt = debug; 
 }
 
