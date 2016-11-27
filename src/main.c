@@ -116,8 +116,6 @@ int main(int argc, const char* argv[]){
         PT_CHK(pthread_join(*thread, NULL));
         free(thread);
         n_joined++;
-
-        printf("*** joined %d ****\n",n_joined);
     }
    
     return 0;

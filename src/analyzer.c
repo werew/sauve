@@ -15,12 +15,10 @@
 char* pop_file(){
     
     PT_CHK(pthread_mutex_lock(&files_queue.mutex));
-    puts("\t\t$ pop file");
     // Get a file or wait to get one
     char* file;
     while((file = ring_buf_pop(files_queue.buf)) == NULL && 
            files_queue.receiving == 1 ){
-    puts("\t\t$ wait");
         pthread_cond_wait(&files_queue.read, &files_queue.mutex);
     }
 
@@ -40,7 +38,6 @@ void* analyzer(void* arg){
         free(file);
     }
     signal_term();    
-    printf("\t\tTerm analyzer %d\n",(int) arg);
     return (void*) 0; 
 }
 

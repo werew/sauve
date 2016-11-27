@@ -17,20 +17,17 @@ char* pop_folder(){
 
     // This scanner is looking for a folder, so it's not active
     active_scanners--;
-    puts("# Pop folder");
 
     // Get a folder or wait to get one
     char* folder;
     while((folder = list_pop(folders_queue.list)) == NULL && 
            active_scanners > 0){
-    puts("# wait ");
         pthread_cond_wait(&folders_queue.pt_cond, &folders_queue.mutex);
     }
 
     if (folder == NULL) {
         // Didn't get a folder: there are no active scanners
         // Notify all the scanners and analyzers.
-    puts("# notify ");
         pthread_cond_broadcast(&folders_queue.pt_cond);
         PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))
 
@@ -40,7 +37,6 @@ char* pop_folder(){
         PT_CHK(pthread_mutex_unlock(&files_queue.mutex));
     } else {
         // Got a folder: this scanner is now active
-    puts("# work");
         active_scanners++;
         PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))
     }
@@ -132,12 +128,10 @@ void* scanner(void* arg){
     // Get a folder
     char* folder;
     while ((folder = pop_folder()) != NULL){
-        printf("%s\n",folder);
         explore_folder(folder);
         free(folder);
     }
     signal_term();    
-    printf("Term scanner %d\n",(int) arg);
     return (void*) 0; 
 }
 
