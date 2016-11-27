@@ -140,6 +140,8 @@ void copy_dir(char* path){
 
     mode_t perms = buf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
     if (mkdir(folder,perms) == -1) fail("mkdir");
+
+    free(folder);
 }
 
 void* scanner(void* arg){
