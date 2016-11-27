@@ -45,6 +45,7 @@ void init_env
     pthread_mutex_init(&files_queue.mutex, NULL);
     pthread_cond_init(&files_queue.read , NULL);
     pthread_cond_init(&files_queue.write, NULL);
+    files_queue.receiving = 1;
 
     files_queue.buf = create_ring_buf(max_buff_entries);
     if (files_queue.buf == NULL) fail("init files_queue");
@@ -96,7 +97,7 @@ int main(int argc, const char* argv[]){
     }
 
     init_env(n_scanners, source, n_analyzers, max_buff_entries, debug);
-    
+
     launch_scanners(n_scanners);
     launch_analyzers(n_analyzers);
 

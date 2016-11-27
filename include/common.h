@@ -28,6 +28,7 @@ _EXTERN_ struct {
     
 _EXTERN_ struct {
     struct ring_buf* buf;
+    int receiving;
     pthread_mutex_t mutex;      // Guarantees safe write/read access
     pthread_cond_t read;        // Condition to wait if buf is empty at reading
     pthread_cond_t write;       // Condition to wait if buf is full at writing

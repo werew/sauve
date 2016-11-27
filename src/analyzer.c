@@ -14,16 +14,19 @@
 // Returns NULL if there are no more active_scanners 
 char* pop_file(){
     
-    PT_CHK(pthread_mutex_lock(&files_queue.mutex))
-
+    PT_CHK(pthread_mutex_lock(&files_queue.mutex));
+    puts("\t\t$ pop file");
     // Get a file or wait to get one
     char* file;
     while((file = ring_buf_pop(files_queue.buf)) == NULL && 
-           active_scanners > 0){
+           files_queue.receiving == 1 ){
+    puts("\t\t$ wait");
         pthread_cond_wait(&files_queue.read, &files_queue.mutex);
     }
 
-    PT_CHK(pthread_mutex_unlock(&files_queue.mutex))
+    pthread_cond_signal(&files_queue.write);
+
+    PT_CHK(pthread_mutex_unlock(&files_queue.mutex));
 
     return file;
 }
@@ -47,7 +50,7 @@ void launch_analyzers(unsigned int n_analyzers){
     for (i=0; i<n_analyzers; i++){
         int e;
         pthread_t thread; 
-        if ((e = pthread_create(&thread, NULL, analyzer, NULL)) != 0){
+        if ((e = pthread_create(&thread, NULL, analyzer,(void*) i)) != 0){
             errno = e;
             fail("pthread_create");
         }

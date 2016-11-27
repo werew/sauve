@@ -17,24 +17,34 @@ char* pop_folder(){
 
     // This scanner is looking for a folder, so it's not active
     active_scanners--;
+    puts("# Pop folder");
 
     // Get a folder or wait to get one
     char* folder;
     while((folder = list_pop(folders_queue.list)) == NULL && 
            active_scanners > 0){
+    puts("# wait ");
         pthread_cond_wait(&folders_queue.pt_cond, &folders_queue.mutex);
     }
 
     if (folder == NULL) {
         // Didn't get a folder: there are no active scanners
-        // Notify all the scanners.
+        // Notify all the scanners and analyzers.
+    puts("# notify ");
         pthread_cond_broadcast(&folders_queue.pt_cond);
+        PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))
+
+        PT_CHK(pthread_mutex_lock(&files_queue.mutex));
+        files_queue.receiving = 0;
+        pthread_cond_broadcast(&files_queue.read);
+        PT_CHK(pthread_mutex_unlock(&files_queue.mutex));
     } else {
         // Got a folder: this scanner is now active
+    puts("# work");
         active_scanners++;
+        PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))
     }
 
-    PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))
 
     return folder;
 }
@@ -133,7 +143,7 @@ void launch_scanners(unsigned int n_scanners){
     for (i=0; i<n_scanners; i++){
         int e;
         pthread_t thread; 
-        if ((e = pthread_create(&thread, NULL, scanner, NULL)) != 0){
+        if ((e = pthread_create(&thread, NULL, scanner, (void*) i)) != 0){
             errno = e;
             fail("pthread_create");
         }
