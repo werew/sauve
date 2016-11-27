@@ -34,9 +34,9 @@ void init_env
 
     // Add source folder
     size_t s = strlen(source);
-    char* first_folder = malloc(s);
+    char* first_folder = malloc(s+1);
     if (first_folder == NULL) fail("malloc");
-    memcpy(first_folder,source, s);
+    strcpy(first_folder,source);
 
     if (list_push(folders_queue.list, first_folder) == -1)
         fail("push folders_queue");
