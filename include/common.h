@@ -10,8 +10,19 @@
     #define _EXTERN_ 
 #endif
 
-_EXTERN_ int debug_opt;
-_EXTERN_ int active_scanners;
+
+#ifdef SENV
+#error "Macro SENV is already defined"
+#endif
+
+#define SENV _sauve_env_
+
+_EXTERN_ struct {
+    int debug_opt;
+    const char* source;
+    const char* destination;
+    const char* previous;
+} _sauve_env_;
 
 _EXTERN_ struct {
     struct list* list;
@@ -21,6 +32,7 @@ _EXTERN_ struct {
 
 _EXTERN_ struct {
     struct list* list;
+    int active_scanners;
     pthread_mutex_t mutex;      // Guarantees safe write/read access 
     pthread_cond_t pt_cond;     // Dispatched when a new folder is available or
                                 // if no more folders need to be processed

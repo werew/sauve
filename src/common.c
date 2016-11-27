@@ -40,7 +40,7 @@ char* change_base
                              new_basedir_len + 1;
 
     char* new_path = malloc(new_path_len+1);
-    if (new_path == NULL) puts("asd");
+    if (new_path == NULL) return NULL;
 
     snprintf(new_path, new_path_len+1,"%s/%s",
              new_basedir,&path[old_basedir_len]);

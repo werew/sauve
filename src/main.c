@@ -15,33 +15,32 @@ void usage(char* name, int exit_value){
     exit(exit_value);
 }
 
-void init_env
-(unsigned int n_scanners, char* source, unsigned int n_analyzers,
- unsigned int max_buff_entries, unsigned int debug){
+void init_queues
+(unsigned int n_scanners, unsigned int n_analyzers,
+ unsigned int max_buff_entries){
 
-    // Step 1:  init term_queue
+    // Init term_queue
     pthread_mutex_init(&term_queue.mutex, NULL);
     pthread_cond_init(&term_queue.push_cond, NULL);
     term_queue.list = create_list(); 
     if (term_queue.list == NULL) fail("init term_queue");
 
-    // Step 2:  init folders_queue
-    active_scanners = n_scanners;
+    // Init folders_queue
+    folders_queue.active_scanners = n_scanners;
     pthread_mutex_init(&folders_queue.mutex, NULL);
     pthread_cond_init(&folders_queue.pt_cond, NULL);
     folders_queue.list = create_list(); 
     if (folders_queue.list == NULL) fail("init folders_queue");
 
-    // Add source folder
-    size_t s = strlen(source);
+    size_t s = strlen(SENV.source);
     char* first_folder = malloc(s+1);
     if (first_folder == NULL) fail("malloc");
-    strcpy(first_folder,source);
+    strcpy(first_folder,SENV.source);
 
     if (list_push(folders_queue.list, first_folder) == -1)
         fail("push folders_queue");
 
-    // Step 3: init files_queue
+    // Init files_queue
     pthread_mutex_init(&files_queue.mutex, NULL);
     pthread_cond_init(&files_queue.read , NULL);
     pthread_cond_init(&files_queue.write, NULL);
@@ -50,8 +49,6 @@ void init_env
     files_queue.buf = create_ring_buf(max_buff_entries);
     if (files_queue.buf == NULL) fail("init files_queue");
 
-    // Step 4: set debug_opt
-    debug_opt = debug; 
 }
 
 
@@ -59,18 +56,15 @@ int main(int argc, const char* argv[]){
     // Default values
     unsigned int n_scanners  = 1, 
                  n_analyzers = 1, 
-                 max_buff_entries = 8, 
-                 debug = 0;
+                 max_buff_entries = 8;
 
-    char *source, *destination, *previous;
-
-
+    // Get options
     int opt;
     while ((opt = getopt (argc, argv, "hns:a:f:")) != -1){
         switch (opt){
             case 'h': usage(argv[0], 0);
                 break;
-            case 'n': debug = 1;
+            case 'n': SENV.debug_opt = 1;
                 break;
             case 's': n_scanners = atoi(optarg); // TODO atoi
                 break ;
@@ -82,21 +76,22 @@ int main(int argc, const char* argv[]){
         }
     }
 
+    // Get arguments and init environnement 
     switch (argc - optind){
         case 2: 
-            source = argv[optind];
-            previous = NULL;
-            destination = argv[optind+1];
+            SENV.source = argv[optind];
+            SENV.previous = NULL;
+            SENV.destination = argv[optind+1];
             break ;
         case 3 :        
-            source = argv[optind];
-            previous = argv[optind+1];
-            destination = argv[optind+1];
+            SENV.source = argv[optind];
+            SENV.previous = argv[optind+1];
+            SENV.destination = argv[optind+1];
             break ;
         default : usage(argv[0], 1);
     }
 
-    init_env(n_scanners, source, n_analyzers, max_buff_entries, debug);
+    init_queues(n_scanners, n_analyzers, max_buff_entries);
 
     launch_scanners(n_scanners);
     launch_analyzers(n_analyzers);

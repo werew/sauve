@@ -16,28 +16,29 @@ char* pop_folder(){
     PT_CHK(pthread_mutex_lock(&folders_queue.mutex))
 
     // This scanner is looking for a folder, so it's not active
-    active_scanners--;
+    folders_queue.active_scanners--;
 
     // Get a folder or wait to get one
     char* folder;
     while((folder = list_pop(folders_queue.list)) == NULL && 
-           active_scanners > 0){
+           folders_queue.active_scanners > 0){
         pthread_cond_wait(&folders_queue.pt_cond, &folders_queue.mutex);
     }
 
     if (folder == NULL) {
         // Didn't get a folder: there are no active scanners
-        // Notify all the scanners and analyzers.
+        // Notify all the scanners
         pthread_cond_broadcast(&folders_queue.pt_cond);
         PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))
 
+        // Notify all the analyzers
         PT_CHK(pthread_mutex_lock(&files_queue.mutex));
         files_queue.receiving = 0;
         pthread_cond_broadcast(&files_queue.read);
         PT_CHK(pthread_mutex_unlock(&files_queue.mutex));
     } else {
         // Got a folder: this scanner is now active
-        active_scanners++;
+        folders_queue.active_scanners++;
         PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))
     }
 
@@ -85,7 +86,8 @@ void handle_file
     char* path = malloc(len_bd+strlen(filename)+2);
     if (path == NULL) fail("malloc");
 
-    
+   
+    // TODO use snprintf 
     strcpy(path,basedir);
     path[len_bd] = '/';
     strcpy(&path[len_bd+1],filename);
