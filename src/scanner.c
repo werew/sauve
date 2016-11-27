@@ -15,12 +15,12 @@ char* pop_folder(){
     PT_CHK(pthread_mutex_lock(&folders_queue.mutex))
 
     // This scanner is looking for a folder, so it's not active
-    folders_queue.active_threads--;
+    active_scanners--;
 
     // Get a folder or wait to get one
     char* folder;
     while((folder = list_pop(folders_queue.list)) == NULL && 
-           folders_queue.active_threads > 0){
+           active_scanners > 0){
         pthread_cond_wait(&folders_queue.pt_cond, &folders_queue.mutex);
     }
 
@@ -30,7 +30,7 @@ char* pop_folder(){
         pthread_cond_broadcast(&folders_queue.pt_cond);
     } else {
         // Got a folder: this scanner is now active
-        folders_queue.active_threads++;
+        active_scanners++;
     }
 
     PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))

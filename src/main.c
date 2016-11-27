@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <errno.h>
+#include <string.h>
 #include "types.h"
 #include "common.h"
 #include "scanner.h"
@@ -24,7 +25,7 @@ void init_env
     if (term_queue.list == NULL) fail("init term_queue");
 
     // Step 2:  init folders_queue
-    folders_queue.active_threads = n_scanners;
+    active_scanners = n_scanners;
     pthread_mutex_init(&folders_queue.mutex, NULL);
     pthread_cond_init(&folders_queue.pt_cond, NULL);
     folders_queue.list = create_list(); 
@@ -34,15 +35,19 @@ void init_env
     size_t s = strlen(source);
     char* first_folder = malloc(s);
     if (first_folder == NULL) fail("malloc");
-
     memcpy(first_folder,source, s);
 
     if (list_push(folders_queue.list, first_folder) == -1)
         fail("push folders_queue");
 
     // Step 3: init files_queue
-    files_queue = create_ring_buf(max_buff_entries);
-   
+    pthread_mutex_init(&files_queue.mutex, NULL);
+    pthread_cond_init(&files_queue.read , NULL);
+    pthread_cond_init(&files_queue.write, NULL);
+
+    files_queue.buf = create_ring_buf(max_buff_entries);
+    if (files_queue.buf == NULL) fail("init files_queue");
+
     // Step 4: set debug_opt
     debug_opt = debug; 
 }
