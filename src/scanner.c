@@ -83,7 +83,8 @@ void handle_file
     struct stat buf;
     if (lstat(path, &buf) == -1) fail("lstat");
     switch (buf.st_mode & S_IFMT) {
-        case S_IFREG: printf("%s is a regular file\n",path);
+        case S_IFREG: 
+                push_file(path);
             break;
         case S_IFDIR: 
                 if (strcmp(filename,".")  == 0 ||

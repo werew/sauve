@@ -60,6 +60,7 @@ void* ring_buf_pop(struct ring_buf* rb){
 
     void* data = rb->buf[rb->first];
     rb->first = (rb->first+1) % rb->max;
+    rb->total--;
 
     return data;
 }
