@@ -99,8 +99,7 @@ void handle_file
         case S_IFREG: 
                 push_file(path);
             break;
-        case S_IFDIR: 
-                push_folder(path);
+        case S_IFDIR: push_folder(path); 
             break;
         case S_IFLNK: printf("%s is a link\n",path);
             break;
@@ -108,6 +107,8 @@ void handle_file
             free(path);
     }
 }
+
+
 
 void explore_folder(const char* folder){
     DIR* d = opendir(folder);
@@ -118,7 +119,7 @@ void explore_folder(const char* folder){
     while (1) {
         // TODO change name to PT_CHK
         PT_CHK(readdir_r(d, &entry, &result));
-
+        
         if (result == NULL) break;   
 
         handle_file(folder, entry.d_name);
@@ -128,10 +129,24 @@ void explore_folder(const char* folder){
     if (closedir(d) == -1) fail("closedir");
 }
 
+void copy_dir(char* path){
+    char* folder = change_base(path, SENV.source, SENV.destination); 
+    if (folder == NULL) fail("change_base"); 
+  
+    puts(folder); 
+
+    struct stat buf;
+    if (lstat(path, &buf) == -1) fail("lstat");
+
+    mode_t perms = buf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+    if (mkdir(folder,perms) == -1) fail("mkdir");
+}
+
 void* scanner(void* arg){
     // Get a folder
     char* folder;
     while ((folder = pop_folder()) != NULL){
+        copy_dir(folder);
         explore_folder(folder);
         free(folder);
     }
