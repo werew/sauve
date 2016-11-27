@@ -76,10 +76,15 @@ void push_file(char* file){
 
 void handle_file
 (const char* basedir, const char* filename){
+
+    if (strcmp(filename,".")  == 0 ||
+        strcmp(filename,"..") == 0 ) return;
+
     // Create path
     size_t len_bd = strlen(basedir);
     char* path = malloc(len_bd+strlen(filename)+2);
     if (path == NULL) fail("malloc");
+
     
     strcpy(path,basedir);
     path[len_bd] = '/';
@@ -93,8 +98,6 @@ void handle_file
                 push_file(path);
             break;
         case S_IFDIR: 
-                if (strcmp(filename,".")  == 0 ||
-                    strcmp(filename,"..") == 0 ) break;
                 push_folder(path);
             break;
         case S_IFLNK: printf("%s is a link\n",path);
@@ -102,7 +105,6 @@ void handle_file
         default:  // Do not treat this file
             free(path);
     }
-    
 }
 
 void explore_folder(const char* folder){

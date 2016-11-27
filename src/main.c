@@ -117,6 +117,10 @@ int main(int argc, const char* argv[]){
         free(thread);
         n_joined++;
     }
+
+    free(term_queue.list);
+    free(folders_queue.list);
+    free(files_queue.buf);
    
     return 0;
 }
