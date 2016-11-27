@@ -115,13 +115,15 @@ void explore_folder(const char* folder){
     
     struct dirent entry;
     struct dirent* result;
-    do {
+    while (1) {
         // TODO change name to PT_CHK
         PT_CHK(readdir_r(d, &entry, &result));
-        
+
+        if (result == NULL) break;   
+
         handle_file(folder, entry.d_name);
 
-    } while (result != NULL);
+    } 
      
     if (closedir(d) == -1) fail("closedir");
 }
