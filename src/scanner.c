@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
+#include "scanner.h"
 #include "common.h"
 #include "types.h"
 
@@ -54,6 +55,17 @@ void push_folder(char* folder){
 }
 
 
+void push_file(char* file){
+    PT_CHK(pthread_mutex_lock(&files_queue.mutex));
+
+    while (ring_buf_push(files_queue.buf, file) == -1) {
+        pthread_cond_wait(&files_queue.write, &files_queue.mutex);
+    }
+
+    pthread_cond_signal(&files_queue.read);
+    
+    PT_CHK(pthread_mutex_unlock(&files_queue.mutex));
+}
 
 
 void handle_file

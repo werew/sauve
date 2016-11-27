@@ -44,22 +44,19 @@ struct ring_buf* create_ring_buf(unsigned int max_elements){
     return rb;
 }
 
-void ring_buf_push(struct ring_buf* rb, void* data){
-    if (rb->total >= rb->max){
-        // TODO
-        printf("wait to push\n");
-    }
+int ring_buf_push(struct ring_buf* rb, void* data){
+    if (rb->total >= rb->max) return -1;
+
     int n = (rb->first+rb->total) % rb->max;
     rb->buf[n] = data;
     rb->total++;
+
+    return 0;
 }
 
 
 void* ring_buf_pop(struct ring_buf* rb){
-    if (rb->total == 0){
-        // TODO ???
-        printf("wait to pop\n");
-    }
+    if (rb->total == 0) return NULL;
 
     void* data = rb->buf[rb->first];
     rb->first = (rb->first+1) % rb->max;

@@ -7,6 +7,7 @@
 #include "types.h"
 #include "common.h"
 #include "scanner.h"
+#include "analyzer.h"
 
 void usage(char* name, int exit_value){
     printf("usage: %s [-h] [-n] [-s n] [-a n] [-f n] "
@@ -97,9 +98,10 @@ int main(int argc, const char* argv[]){
     init_env(n_scanners, source, n_analyzers, max_buff_entries, debug);
     
     launch_scanners(n_scanners);
+    launch_analyzers(n_analyzers);
 
     // Join threads
-    unsigned int n_threads = n_scanners ; // XXX + n_analyzers;
+    unsigned int n_threads = n_scanners + n_analyzers;
     unsigned int n_joined  = 0;
     while (n_joined < n_threads){
         PT_CHK(pthread_mutex_lock(&term_queue.mutex));
