@@ -82,7 +82,7 @@ void handle_file
 (const char* basedir, const char* filename){
     // Create path
     size_t len_bd = strlen(basedir);
-    char* path = malloc(len_bd+strlen(filename)+1);
+    char* path = malloc(len_bd+strlen(filename)+2);
     if (path == NULL) fail("malloc");
     
     strcpy(path,basedir);
