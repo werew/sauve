@@ -71,6 +71,10 @@ char* pop_folder(){
     return folder;
 }
 
+
+
+
+
 void push_folder(char* folder){
     PT_CHK(pthread_mutex_lock(&folders_queue.mutex))
 
@@ -81,6 +85,9 @@ void push_folder(char* folder){
     
     PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))
 }
+
+
+
 
 void handle_file
 (const char* basedir, const char* filename){
@@ -99,7 +106,10 @@ void handle_file
     switch (buf.st_mode & S_IFMT) {
         case S_IFREG: printf("%s is a regular file\n",path);
             break;
-        case S_IFDIR: push_folder(path);
+        case S_IFDIR: 
+                if (strcmp(filename,".")  == 0 ||
+                    strcmp(filename,"..") == 0 ) break;
+                push_folder(path);
             break;
         case S_IFLNK: printf("%s is a link\n",path);
             break;
