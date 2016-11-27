@@ -117,7 +117,7 @@ int main(int argc, const char* argv[]){
         free(thread);
         n_joined++;
 
-        printf("*** joined %d ****",n_joined);
+        printf("*** joined %d ****\n",n_joined);
     }
    
     return 0;

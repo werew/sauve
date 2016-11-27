@@ -135,6 +135,7 @@ void* scanner(void* arg){
         free(folder);
     }
     signal_term();    
+    printf("Term scanner %d\n",(int) arg);
     return (void*) 0; 
 }
 

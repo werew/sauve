@@ -36,10 +36,11 @@ void* analyzer(void* arg){
     // Get a file
     char* file;
     while ((file = pop_file()) != NULL){
-        printf("--file--> %s\n",file);
+        printf("\t\t--file--> %s\n",file);
         free(file);
     }
     signal_term();    
+    printf("\t\tTerm analyzer %d\n",(int) arg);
     return (void*) 0; 
 }
 
