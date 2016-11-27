@@ -37,6 +37,8 @@ _EXTERN_ struct {
 #define fail(x) _fail(x, __LINE__, __func__)
 void _fail(const char* msg, int line, const char* func);
 void signal_term();
+char* change_base
+(const char* path, const char* old_basedir, const char* new_basedir);
 
 #define PT_CHK(call) {if ((errno=(call)) != 0) fail("");}
 
