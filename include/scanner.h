@@ -2,7 +2,7 @@
 #define _SCANNER_H_
 
 
-void launch_scanners(unsigned int n_scanners, const char* source);
+void launch_scanners(unsigned int n_scanners);
 
 
 #endif 

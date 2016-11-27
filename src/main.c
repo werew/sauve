@@ -91,7 +91,7 @@ int main(int argc, const char* argv[]){
 
     init_env(n_scanners, source, n_analyzers, max_buff_entries, debug);
     
-    launch_scanners(n_scanners, source);
+    launch_scanners(n_scanners);
 
     // Join threads
     unsigned int n_threads = n_scanners ; // XXX + n_analyzers;
