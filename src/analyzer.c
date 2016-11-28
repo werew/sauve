@@ -47,10 +47,13 @@ int try_link(const char* src, const char* dest, struct stat* buf_src){
         buf_src->st_size  != buf_prv.st_size  ||
         buf_src->st_atime != buf_prv.st_atime ||
         buf_src->st_mtime != buf_prv.st_mtime ){
+        free(prev);
         return 0;
     }
 
     if (link(prev, dest) == -1) fail("link");
+
+    free(prev);
     
     return 1;
 }
