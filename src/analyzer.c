@@ -50,6 +50,13 @@ int try_link(const char* src, const char* dest, struct stat* buf_src){
         free(prev);
         return 0;
     }
+   
+    // If debug is set 
+    if (SENV.debug_opt == 1){
+        printf("---> Linking %s to %s\n",prev, dest);
+        free(prev);
+        return 1;
+    }
 
     if (link(prev, dest) == -1) fail("link");
 
@@ -69,6 +76,12 @@ void copy_file(const char* src, const char* dest){
     // If previous is set, try to just link the file
     if (SENV.previous  != NULL && 
         try_link(src,dest,&buf) == 1) return;
+
+    // If debug is set 
+    if (SENV.debug_opt == 1){
+        printf("---> Copying %s to %s\n",src, dest);
+        return;
+    }
 
     // Open the source and the destination
     // (...setting the good permissions)

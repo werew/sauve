@@ -133,7 +133,11 @@ void copy_dir(char* path){
     char* folder = change_base(path, SENV.source, SENV.destination); 
     if (folder == NULL) fail("change_base"); 
   
-    puts(folder); 
+    if (SENV.debug_opt == 1){
+        printf("Creating directory %s\n",folder);
+        free(folder);
+        return;
+    }
 
     struct stat buf;
     if (lstat(path, &buf) == -1) fail("lstat");
