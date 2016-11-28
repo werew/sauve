@@ -86,10 +86,11 @@ int main(int argc, const char* argv[]){
         case 3 :        
             SENV.source = argv[optind];
             SENV.previous = argv[optind+1];
-            SENV.destination = argv[optind+1];
+            SENV.destination = argv[optind+2];
             break ;
         default : usage(argv[0], 1);
     }
+
 
     init_queues(n_scanners, n_analyzers, max_buff_entries);
 

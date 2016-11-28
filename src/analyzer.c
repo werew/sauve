@@ -32,22 +32,46 @@ char* pop_file(){
 }
 
 
-void copy_file(const char* file){
+int try_link(const char* src, const char* dest, struct stat* buf_src){
+    
+    // Build the path to the previous copy
+    char* prev = change_base(src, SENV.source, SENV.previous); 
+    if (prev == NULL) fail("change_base"); 
 
-    // Build the path to the copy
-    char* copy = change_base(file, SENV.source, SENV.destination); 
-    if (copy == NULL) fail("change_base"); 
+    // Get some infos about the previous copy
+    struct stat buf_prv;
+    if (lstat(prev, &buf_prv) == -1) fail("lstat");
+
+    // Compare source file with previous copy
+    if (buf_src->st_mode  != buf_prv.st_mode  ||
+        buf_src->st_size  != buf_prv.st_size  ||
+        buf_src->st_atime != buf_prv.st_atime ||
+        buf_src->st_mtime != buf_prv.st_mtime ){
+        return 0;
+    }
+
+    if (link(prev, dest) == -1) fail("link");
+    
+    return 1;
+}
+
+
+void copy_file(const char* src, const char* dest){
 
     // Get some infos about the file to copy
     struct stat buf;
-    if (lstat(file, &buf) == -1) fail("lstat");
+    if (lstat(src, &buf) == -1) fail("lstat");
     mode_t perms = buf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+
+    // If previous is set, try to just link the file
+    if (SENV.previous  != NULL && 
+        try_link(src,dest,&buf) == 1) return;
 
     // Open the source and the destination
     // (...setting the good permissions)
     int fd_src, fd_dst;
-    if ((fd_src = open(file, O_RDONLY)) == -1 || 
-        (fd_dst = open(copy, O_WRONLY|O_CREAT, perms)) == -1) 
+    if ((fd_src = open(src , O_RDONLY)) == -1 || 
+        (fd_dst = open(dest, O_WRONLY|O_CREAT, perms)) == -1) 
         fail("open");
 
     // Main copy loop
@@ -62,18 +86,22 @@ void copy_file(const char* file){
 
     // Set the good access and modification time    
     struct utimbuf times = { buf.st_atime, buf.st_mtime };
-    if (utime(copy,&times) == -1) fail("utime");
-    
-    free(copy);
+    if (utime(dest,&times) == -1) fail("utime");
 }
 
 void* analyzer(void* arg){
     // Get a file
-    char* file;
-    while ((file = pop_file()) != NULL){
-        printf("\t\t--file--> %s\n",file);
-        copy_file(file);
-        free(file);
+    char* src;
+    while ((src = pop_file()) != NULL){
+
+        // Build the path to the copy
+        char* dest = change_base(src, SENV.source, SENV.destination); 
+        if (dest == NULL) fail("change_base"); 
+
+        copy_file(src, dest);
+
+        free(src);
+        free(dest);
     }
     signal_term();    
     return (void*) 0; 
