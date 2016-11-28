@@ -82,15 +82,11 @@ void handle_file
         strcmp(filename,"..") == 0 ) return;
 
     // Create path
-    size_t len_bd = strlen(basedir);
-    char* path = malloc(len_bd+strlen(filename)+2);
+    size_t len  = strlen(basedir) + strlen(filename) + 2;
+    char* path = malloc(len);
     if (path == NULL) fail("malloc");
 
-   
-    // TODO use snprintf 
-    strcpy(path,basedir);
-    path[len_bd] = '/';
-    strcpy(&path[len_bd+1],filename);
+    snprintf(path,len, "%s/%s", basedir, filename);
 
     // Handle the file 
     struct stat buf;
