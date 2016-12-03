@@ -11,5 +11,6 @@ void push_file(char* file);
 
 void handle_file(const char* basedir, const char* filename);
 void explore_folder(const char* folder);
+void copy_dir(const char* src, const char* dest);
 
 #endif 

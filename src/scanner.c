@@ -11,8 +11,17 @@
 #include "common.h"
 #include "types.h"
 
+/**
+ * Retrives a folder from the folders queue. If no folder is available
+ * waits until a new folder is pushed into the queue. If there are not
+ * folders available and neither active scanners, notifies all the 
+ * inactive threads, "closes" the files queue and returns NULL.
+ *
+ * @return A zero-terminated string containing the path to the folder
+ *         to be copyed or NULL if there are not folders to handle.
+ */
 char* pop_folder(){
-    
+  
     PT_CHK(pthread_mutex_lock(&folders_queue.mutex))
 
     // This scanner is looking for a folder, so it's not active
@@ -29,8 +38,10 @@ char* pop_folder(){
         // Didn't get a folder: there are no active scanners
 
         if (folders_queue.active_scanners != -1){
-            // Notify all the scanners
+
             folders_queue.active_scanners = -1;
+
+            // Notify all the scanners
             pthread_cond_broadcast(&folders_queue.pt_cond);
             PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))
 
@@ -40,6 +51,7 @@ char* pop_folder(){
             pthread_cond_broadcast(&files_queue.read);
             PT_CHK(pthread_mutex_unlock(&files_queue.mutex));
         } else {
+            // The other threads have already been notified 
             PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))
         }
 
@@ -51,42 +63,66 @@ char* pop_folder(){
 
     }
 
-
     return folder;
 }
 
 
 
-
-
+/**
+ * Adds a new folder to the folders queue.
+ * @param folder A zero-terminated string containing the path of the
+ *        folder to be added.
+ */
 void push_folder(char* folder){
     PT_CHK(pthread_mutex_lock(&folders_queue.mutex))
 
+    // Push folder
     if (list_push(folders_queue.list, folder) == -1) 
         fail("list_push");
 
+    // Tells waiting scanners
     pthread_cond_signal(&folders_queue.pt_cond);
     
     PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))
 }
 
 
+
+/**
+ * Adds a new file to the files queue.
+ * @param file A zero-terminated string containing the path of the
+ *        file to be added.
+ */
 void push_file(char* file){
     PT_CHK(pthread_mutex_lock(&files_queue.mutex));
 
+    // Push file
     while (ring_buf_push(files_queue.buf, file) == -1) {
         pthread_cond_wait(&files_queue.write, &files_queue.mutex);
     }
 
+    // Tells waiting analyzers
     pthread_cond_signal(&files_queue.read);
     
     PT_CHK(pthread_mutex_unlock(&files_queue.mutex));
 }
 
 
+
+/**
+ * Handles a file: regular files are pushed into the files queue
+ * while directories are pushed into the folders queue. Other
+ * types of files are ignored.
+ * @param basedir A null-terminated string containing the path
+ *        to the basedir of the file
+ * @param filename A null-terminated string containing the name
+ *        of the file
+ */
 void handle_file
 (const char* basedir, const char* filename){
 
+    // Ignore those folders in order to prevent
+    // infinite loops
     if (strcmp(filename,".")  == 0 ||
         strcmp(filename,"..") == 0 ) return;
 
@@ -101,30 +137,31 @@ void handle_file
     struct stat buf;
     if (lstat(path, &buf) == -1) fail("lstat");
     switch (buf.st_mode & S_IFMT) {
-        case S_IFREG: 
-                push_file(path);
+        case S_IFREG: push_file(path);
             break;
         case S_IFDIR: push_folder(path); 
             break;
-        case S_IFLNK: printf("%s is a link\n",path);
-            break;
-        default:  // Do not treat this file
+        default:  // Ignore this file
             free(path);
     }
 }
 
 
 
+/**
+ * Explore a folder by handling each file contained in it
+ * @param folder A null-terminated string containing the 
+ *        path to the folder
+ */
 void explore_folder(const char* folder){
     DIR* d = opendir(folder);
     if (d == NULL) fail("Cannot open source folder");
-    
+  
     struct dirent entry;
     struct dirent* result;
     while (1) {
-        // TODO change name to PT_CHK
+
         PT_CHK(readdir_r(d, &entry, &result));
-        
         if (result == NULL) break;   
 
         handle_file(folder, entry.d_name);
