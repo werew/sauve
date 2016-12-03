@@ -9,7 +9,7 @@
 #include "scanner.h"
 #include "analyzer.h"
 
-void usage(char* name, int exit_value){
+void usage(const char* name, int exit_value){
     printf("usage: %s [-h] [-n] [-s n] [-a n] [-f n] "
            "source [previous] destination\n",name);
     exit(exit_value);
@@ -52,7 +52,7 @@ void init_queues
 }
 
 
-int main(int argc, const char* argv[]){
+int main(int argc, char* argv[]){
     // Default values
     unsigned int n_scanners  = 1, 
                  n_analyzers = 1, 
