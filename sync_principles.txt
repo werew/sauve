@@ -1,209 +1,221 @@
 
 
--------------------- 1 Conditions d'arret ----------------------------
+-------------------- 1 Conditions d'arrêt ----------------------------
 
 1.1 Scanners 
 
-Un thread de type "scanner" peut/doit se terminer lorsque il le
-traitement de toutes les repertoires de l'arborescence a ete termine,
-ce qui se traduit par l'etat suivant: le buffer des repertoires est
-vide et n'est pas susceptible d'etre rempli. 
-Cet etat se verifie lorsque ces deux conditions sont satisfactes:
+Un thread de type "scanner" peut/doit se terminer lorsque le
+traitement de tous les répertoires de l'arborescence a été termine, ce
+qui se traduit par l'état suivant: le buffer des répertoires est vide
+et n'est pas susceptible d'être rempli.  Cet état se vérifie lorsque
+ces deux conditions sont satisfaites:
 
-    - le buffer des repertoires ne contiens aucune entree a traiter
+    - le buffer des répertoires ne contiens aucune entrée à traiter
 
-    - tous les autres threads "scanner" se sont termine ou sont 
-      inactives (ne sont pas en train de traiter des repertoires)
+    - tous les autres threads "scanner" se sont terminé ou sont
+      inactifs (ne sont pas en train de traiter des répertoires)
 
-La deuxieme condition assure que aucun nouveau repertoire puisse
-etre mis dans le buffer. 
+La deuxième condition assure qu'aucun nouveau répertoire puisse être
+mis dans le buffer. 
+ 
 
 1.2 Analyzer 
 
-La condition d'arret des threads de type "analyzer" est tres proche
-de cella des "scanners". Un "analyzer" peut/doit se terminer lorque 
-le traitement de tous les fichiers et repertoires de l'arborescence
-a ete termine, ce qui se traduit par l'etat suivant: le buffer des
-fichier est vide et n'est pas susceptible d'etre rempli.
-Cet etat se verifie lorsque ces deux conditions sont satisfactes:
+La condition d'arrêt des threads de type "analyzer" est très proche de
+cela des "scanners". Un "analyzer" peut/doit se terminer lorsque le
+traitement de tous les fichiers et répertoires de l'arborescence a été
+terminé, ce qui se traduit par l'état suivant: le buffer des fichiers
+est vide et n'est pas susceptible d'être rempli.  Cet état se vérifie
+lorsque ces deux conditions sont satisfaites:
 
-    - le buffer des fichiers ne contiens aucun entree a traiter
+    - le buffer des fichiers ne contiens aucun entré à traiter
 
-    - les threads "scanner" ont termine le traitement des tous les 
-      repertoires de l'arborescence
+    - les threads "scanner" ont terminé le traitement de tous les
+      répertoires de l'arborescence
 
-La deuxieme condition est satistaite lorsque les conditions d'arret
-des "scanners" decrite ci-dessus sont verifiee et assure qu'aucun
-nouveau fichier puisse etre mis dans le buffer.
+La deuxième condition est satisfaite lorsque les conditions d'arrêt
+des "scanners" décrites ci-dessus sont vérifiées et assure qu'aucun
+nouveau fichier puisse être mis dans le buffer.
 
 
------------------- 2 Syncronization des threads ---------------------
+------------------ 2 Synchronisation des threads ---------------------
 
-2.1 Acces aux buffers
+2.1 Accès aux buffers
 
 Le programme utilise trois FIFO:
 
-    - folders_queue: une liste chainee contenant les repertoires 
-      a traiter
-    
-    - files_queue: un buffer circulaire contenant les fichiers a 
-      traiter
+    - folders_queue: une liste chainée contenant les répertoires a
+      traité
+ 
+    - files_queue: un buffer circulaire contenant les fichiers a
+      traité
 
-    - term_queue: une liste chainee contenant les ids des threads 
-      termines
+    - term_queue: une liste chainée contenant les Ids des threads
+      terminés
 
-A chaqune des ces FIFO est associe un mutex et une ou plusieurs
-conditions pour en garantire l'access syncronise.
+À chacune de ces FIFO est associe un mutex et une ou plusieurs
+conditions pour en garantir l'accès synchronisé.
+
 
 2.1.1  Listes: folders_queue et term_queue
 
-L'acces (en lecture ou ecriture) a ces listes est soumis a l'utilise
-d'un mutex. Dans le cas d'un access en lecture, si la liste est vide
-le lecteur doit attendre une condition afin d'etre notifie lors d'une
-adjonction dans la liste. Apres chaque adjonction un ecrivain doit de
-son cote notifier un des lecteurs en attende par le biais d'un signal
-sur la condition. L'algorithme peut etre ainsi resume:
+L'accès (en lecture ou écriture) à ces listes est soumis à
+l'utilisation d'un mutex. Dans le cas d'un accès en lecture, si la
+liste est vide le lecteur doit attendre une condition afin d'être
+notifié lors d'une adjonction dans la liste. Après chaque adjonction
+un écrivain doit de son cote notifier un des lecteurs en attende par
+le biais d'un signal sur la condition. L'algorithme peut être ainsi
+résumé:
 
-    Lire element ( queue ):
-        Lock queue.mutex
+    Lire element ( queue ): 
+        Lock queue.mutex 
+
         tant que queue est vide:
-            attendre queue.condition /* unlock/lock implicite */
+            attendre queue.condition /* unlock/lock implicite */ 
+
         element := queue.pop() 
-        Unlock queue.mutex
+        Unlock queue.mutex 
         renvoyer element
          
-    Ecrire element ( queue, element ):
-        Lock queue.mutex
+    Écrire element ( queue, element ): 
+        Lock queue.mutex 
+        queue.push( element ) 
         Signal queue.condition
-        queue.push(element ) 
-        Unlock queue.mutex
+        Unlock queue.mutexn 
     
-
 
 2.1.2 Buffer circulaire: files_queue
 
-Etant donne que la taille d'un buffer circulaire est limite, l'acces 
-syncronisee a cette structure de donnees comporte une legere 
-difference par rapport aux FIFO qu'on a vu avant. 
-Cette fois-ci un ecrivain peut devoir attendre si le buffer est plein.
-L'algorithme est donc le meme que celui utilisee pour les listes sauf
-pour une conditione supplementaire qui permet a l'ecrivain d'attendre
-quand le buffer est plein et etre notifie dans le cas une slot du
-buffer ait ete libere. L'algorithme peut etre ainsi resume:
+Étant donné que la taille d'un buffer circulaire est limité, l'accès
+synchronisé à cette structure de données comporte une légère
+différence par rapport aux FIFO qu'on a vu avant.  Cette fois-ci un
+écrivain peut devoir attendre si le buffer est plein.  L'algorithme
+est donc le même que celui utilisé pour les listes sauf pour une
+condition supplémentaire qui permet à l'écrivain d'attendre quand le
+buffer est plein et être notifié dans le cas un slot du buffer ait été
+libéré. L'algorithme peut être ainsi résumé:
 
 
-    Lire element ( queue ):
-        Lock queue.mutex
+    Lire element ( queue ): 
+        Lock queue.mutex 
+
         tant que queue est vide:
             attendre queue.condition_lecture 
+
         element := queue.pop() 
-        Signal queue.condition_ecriture
-        Unlock queue.mutex
+        Signal queue.condition_ecriture 
+        Unlock queue.mutex 
         renvoyer element
+
+
          
-    Ecrire element ( queue, element ):
-        Lock queue.mutex
-        tant que queue est plein:
-            attendre queue.condition_ecriture
-        queue.push( element ) 
-        Signal queue.condition_lecture
+    Écrire element ( queue, element ): 
+        Lock queue.mutex 
+
+        tant que queue est plein: 
+            attendre queue.condition_ecriture 
+
+        queue.push( element )
+        Signal queue.condition_lecture 
         Unlock queue.mutex
 
 
-2.2 Arret des threads
+2.2 Arrêt des threads
 
-Dans la premiere partie de ce document j'ai presente les conditions
-d'arret de chaque thread, maintenant c'est le moment de voir
-plus en detail le mechanisme de syncronisation utilise dans le
-programme pour mettre en place les principes enonces dans la
-premiere partie.
+Dans la première partie de ce document j'ai présenté les conditions
+d'arrêt de chaque thread, maintenant c'est le moment de voir plus en
+détail le mécanisme de synchronisation utilisé dans le programme pour
+mettre en place les principes énoncés dans la première partie.
 
 2.2.1 Scanner 
 
-Un thread de type "scanner" verifie ses condition d'arret lorque il a
-termine de traiter un repertoire et est en train de chercher un
-nouveau repertoire a traiter. Pour etre en mesure de savoir le nombre
-de scanners actives on introduit un compteur qui est initialize avec
-le nombre totale des scanners et:
+Un thread de type "scanner" vérifie ses conditions d'arrêt lorsqu'il a
+terminé de traiter un répertoire et est en train de chercher un
+nouveau répertoire à traiter. Pour être en mesure de connaître le
+nombre de scanners actifs on introduit un compteur qui est initialisé
+avec le nombre total des scanners et:
 
-    - decremente lorque un scanner est en train de chercher un
-      repertoire
+    - décrémenté lorsqu'un scanner est en train de chercher un
+      répertoire
+    - incrémenté lorsqu'un scanner a obtenu un nouveau répertoire a
+      traité
 
-    - incremente lorque un scanner a obtenu un nouveau repertoire a
-      traiter
 
-Pour garantir la terminaison des toutes les scanners, le premier
-scanner a se terminer doit "liberer" tous les scanners inactives (en
-attende de recevoir un repertoire) par le biais d'un signal.
-L'algorithme a la lecture d'un repertoire peut etre ainsi resume:
 
-    Obtenir repertoire ( queue ):
+Pour garantir la terminaison de tous les scanners, le premier scanner
+à se terminer doit "libérer" tous les scanners inactives (en attende
+de recevoir un répertoire) par le biais d'un signal.  L'algorithme à
+la lecture d'un répertoire peut être ainsi résumé;
+
+    Obtenir repertoire ( queue ): 
         Lock queue.mutex
         queue.scanners_actives -= 1
 
-        tant que queue est vide:
+        tant que queue est vide: 
             si queue.scanners_actives = 0:
-                Broadcast signal queue.condition
-                Unlock queue.mutex
-                terminer
-            sinon attendre queue.condition 
+            Broadcast signal queue.condition 
+            Unlock queue.mutex
+            terminer 
+        sinon
+            attendre queue.condition 
 
         element := queue.pop() 
-        queue.scanners_actives += 1
+        queue.scanners_actives += 1 
         Unlock queue.mutex
         renvoyer element
 
 
 2.2.2 Analyzer
 
-Pour tester ses conditions d'arret un analyzer doit pouvoir verifier
-si les scanners ont termine le traiter toutes les repertoires.  Pour
-cette raison on introduit une variable qui indique si le traitement
-des repertoires a ete complete et donc si le buffer des fichiers peut
+Pour tester ses conditions d'arrêt un analyzer doit pouvoir vérifier
+si les scanners ont terminé le traité tous les répertoires. Pour cette
+raison on introduit une variable qui indique si le traitement des
+répertoires a été complété et donc si le buffer des fichiers peut
 recevoir ou non des nouveaux fichiers dans le futur. Cette variable
-est initialise at 1 et mise at 0 par les scanners lorque le traitement
-des repertoires a ete termine. Pour garantir la terminaison des
-toutes les analyzers, le premier scanner a se terminer doit "liberer"
-tous les analyzers en attende de recevoir un fichier par le biais d'un
-signal.  Apres cette consideration le nouveau algorithme a la lecture 
-d'un repertoire sera le suivant:
+est initialisée à 1 et mise à 0 par les scanners lorsque le traitement
+des répertoires a été terminé. Pour garantir la terminaison de toutes
+les analyzers, le premier scanner à se terminer doit "libérer" tous
+les analyzers en attende de recevoir un fichier par le biais d'un
+signal. Après cette considération le nouvel algorithme à la lecture
+d'un répertoire sera le suivant:
 
-    Notifier analyzers (queue_files):
+    Notifier analyzers (queue_files): 
         Lock queue_files
-        queue_files.va_recevoir = 0
-        Broadcast signal queue_files.condition_lecture
+        queue_files.va_recevoir = 0 
+        Broadcast signal queue_files.condition_lecture 
         Unlock queue_files
 
-    Obtenir repertoire ( queue_folders, queue_files ):
-        Lock queue_folders.mutex
+    Obtenir repertoire ( queue_folders, queue_files ): 
+        Lock queue_folders.mutex 
         queue_folders.scanners_actives -= 1
 
         tant que queue_folders est vide:
-            si queue_folders.scanners_actives = 0:
-                Broadcast signal queue_folders.condition
-                Unlock queue_folders.mutex
+            si queue_folders.scanners_actives = 0: 
+                Broadcast signal queue_folders.condition 
+                Unlock queue_folders.mutex 
                 Notifier analyzers
-                terminer
-            sinon attendre queue_folders.condition 
+                terminer 
+            sinon:
+                 attendre queue_folders.condition 
 
         element := queue_folders.pop() 
-        queue_folders.scanners_actives += 1
-        Unlock queue_folders.mutex
+        queue_folders.scanners_actives += 1 
+        Unlock queue_folders.mutex 
         renvoyer element
 
 En ce qui concerne les analyzers, il suffit de tester si le buffer des
-fichiers est vede et prendre en compte le valeur de la variable
-"va_recevoir" pour determiner la condition d'arret.
+fichiers est vide et prendre en compte la valeur de la variable "va
+recevoir" pour déterminer la condition d'arrêt.
 
-    Obtenir fichier ( queue_files ):
+    Obtenir fichier ( queue_files ): 
         Lock queue_files.mutex
 
-        tant que queue_files est vide:
+        tant que queue_files est vide: 
             si queue_files.va_recevoir = 0:
-                terminer
+                terminer 
             attendre queue_files.condition_lecture 
 
         element := queue_files.pop() 
-        Signal queue_files.condition_ecriture
-        Unlock queue_files.mutex
+        Signal queue_files.condition_ecriture 
+        Unlock queue_files.mutex 
         renvoyer element
