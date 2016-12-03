@@ -19,8 +19,6 @@ INCLUDES := $(INCDIR)/*.h
 OBJECTS := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o) 
 DEP = $(OBJECTS:%.o=%.d)
 EXECUTABLE := $(BINDIR)/$(TARGET)
-DOCFILE = Doxyfile
-README = README.md
 
 
 
@@ -38,15 +36,9 @@ $(EXECUTABLE): $(OBJECTS)
 
 
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
+	@mkdir -p $(OBJDIR)
 	@echo "\n-----------------> Compiling $@ ... "
 	$(CC) $(CFLAGS) -MMD -c $< -o $@
-
-$(TARGET).tar.gz : $(INCDIR) $(SRCDIR) $(DOCFILE) $(README) $(MAKEFILE_LIST)
-	tar -cvzf $@ $^
-
-.PHONY : archive clean 
-
-archive : $(TARGET).tar.gz
 
 clean:
 	@echo "----------------- Cleaning -----------------"
