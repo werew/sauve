@@ -203,11 +203,10 @@ void* scanner(void* arg){
       
         if (SENV.debug_opt == 1){
             printf("Creating directory %s\n",copy);
-            free(copy); free(folder);
-            continue; 
+        } else {
+            copy_dir(folder, copy);
         }
 
-        copy_dir(folder, copy);
         explore_folder(folder);
         free(folder); free(copy);
     }
