@@ -8,12 +8,26 @@
 #define _COMMON_C_
 #include "common.h"
 
+/**
+ * Terminates the program printing an error message
+ * @param msg Error message
+ * @param line Number of the line
+ * @param func Name of the function
+ *
+ * @note Do not use this function direclty, rather use
+ *       the wrapping macro "fail(msg)
+ */
 void _fail(const char* msg, int line, const char* func){
     fprintf(stderr, "Error at line %d (function %s):\n",line,func);
     perror(msg);
     exit(EXIT_FAILURE);
 }
+ 
 
+
+/**
+ * Declare the current thread as being "joinable"
+ */
 void signal_term(){
     pthread_t* thread = malloc(sizeof(pthread_t));
     if (thread == NULL) fail("malloc");
@@ -28,7 +42,13 @@ void signal_term(){
 }
 
 
+
 /**
+ * Change the base of a path with a new one
+ * @param path Original path
+ * @param old_basedir Old base of the path
+ * @param new_basedir Base of the new path
+ * @return A pointer to the new path or NULL in case of error
  * note: old_basedir must match exaclty the initial content
  *       of path,  otherwise the result is unspecified 
  */
