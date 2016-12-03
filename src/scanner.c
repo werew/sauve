@@ -27,19 +27,28 @@ char* pop_folder(){
 
     if (folder == NULL) {
         // Didn't get a folder: there are no active scanners
-        // Notify all the scanners
-        pthread_cond_broadcast(&folders_queue.pt_cond);
-        PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))
 
-        // Notify all the analyzers
-        PT_CHK(pthread_mutex_lock(&files_queue.mutex));
-        files_queue.receiving = 0;
-        pthread_cond_broadcast(&files_queue.read);
-        PT_CHK(pthread_mutex_unlock(&files_queue.mutex));
+        if (folders_queue.active_scanners != -1){
+            // Notify all the scanners
+            folders_queue.active_scanners = -1;
+            pthread_cond_broadcast(&folders_queue.pt_cond);
+            PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))
+
+            // Notify all the analyzers
+            PT_CHK(pthread_mutex_lock(&files_queue.mutex));
+            files_queue.receiving = 0;
+            pthread_cond_broadcast(&files_queue.read);
+            PT_CHK(pthread_mutex_unlock(&files_queue.mutex));
+        } else {
+            PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))
+        }
+
     } else {
+
         // Got a folder: this scanner is now active
         folders_queue.active_scanners++;
         PT_CHK(pthread_mutex_unlock(&folders_queue.mutex))
+
     }
 
 
@@ -129,6 +138,7 @@ void copy_dir(char* path){
     char* folder = change_base(path, SENV.source, SENV.destination); 
     if (folder == NULL) fail("change_base"); 
   
+        printf("Creating directory %s\n",path);
     if (SENV.debug_opt == 1){
         printf("Creating directory %s\n",folder);
         free(folder);
