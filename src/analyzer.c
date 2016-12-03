@@ -13,7 +13,13 @@
 #include "common.h"
 #include "types.h"
 
-// Returns NULL if there are no more active_scanners 
+/**
+ * Retrives a file from the files queue. If no file is available
+ * waits until a new file is pushed into the queue. 
+ *
+ * @return A zero-terminated string containing the path to the file
+ *         or NULL if there are not files to handle.
+ */
 char* pop_file(){
     
     PT_CHK(pthread_mutex_lock(&files_queue.mutex));
@@ -32,6 +38,16 @@ char* pop_file(){
 }
 
 
+
+/**
+ * Checks if a previous copy of the file is identical to the
+ * original file. In this case creates an hard link to the original
+ * file into the given destination.
+ * @param src Path to the original file
+ * @param dest Path to the potential link
+ * @param buf_src struct stat of the source file
+ * @return 1 if an hard link has been created, 0 otherwise
+ */
 int try_link(const char* src, const char* dest, struct stat* buf_src){
     
     // Build the path to the previous copy
@@ -66,6 +82,13 @@ int try_link(const char* src, const char* dest, struct stat* buf_src){
 }
 
 
+
+/**
+ * Copies a file togheter with its permissions and 
+ * last access and modification.
+ * @param scr File to copy
+ * @param dest Path to the copy
+ */
 void copy_file(const char* src, const char* dest){
 
     // Get some infos about the file to copy
@@ -105,6 +128,11 @@ void copy_file(const char* src, const char* dest){
     if (utime(dest,&times) == -1) fail("utime");
 }
 
+
+
+/**
+ * Entry point of an analyzer
+ */
 void* analyzer(void* arg){
     // Get a file
     char* src;
@@ -124,13 +152,16 @@ void* analyzer(void* arg){
 }
 
 
-
+/** 
+ * Launch a certain naumber of threads analyzer. 
+ * @param n_analyzers The number of analyzers to be launched
+ */
 void launch_analyzers(unsigned int n_analyzers){
     int i; 
     for (i=0; i<n_analyzers; i++){
         int e;
         pthread_t thread; 
-        if ((e = pthread_create(&thread, NULL, analyzer,(void*) i)) != 0){
+        if ((e = pthread_create(&thread, NULL, analyzer, NULL)) != 0){
             errno = e;
             fail("pthread_create");
         }
