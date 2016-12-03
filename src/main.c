@@ -84,18 +84,21 @@ int main(int argc, char* argv[]){
                  max_buff_entries = 8;
 
     // Get options
-    int opt;
+    int opt; char* tmp;
     while ((opt = getopt (argc, argv, "hns:a:f:")) != -1){
         switch (opt){
             case 'h': usage(argv[0], 0, 1);
                 break;
             case 'n': SENV.debug_opt = 1;
                 break;
-            case 's': n_scanners = atoi(optarg); // TODO atoi
+            case 's': n_scanners = strtol(optarg, &tmp, 10);
+                      if (*tmp != '\0') fail("strtol");
                 break ;
-            case 'a': n_analyzers = atoi(optarg); // TODO atoi
+            case 'a': n_analyzers = strtol(optarg, &tmp, 10);
+                      if (*tmp != '\0') fail("strtol");
                 break ;
-            case 'f': max_buff_entries = atoi(optarg); // TODO atoi
+            case 'f': max_buff_entries  = strtol(optarg, &tmp, 10);
+                      if (*tmp != '\0') fail("strtol");
                 break ;
             default: usage(argv[0], 1, 0);
         }
@@ -117,8 +120,10 @@ int main(int argc, char* argv[]){
     }
 
 
+    // Init global queues
     init_queues(n_scanners, n_analyzers, max_buff_entries);
 
+    // Lauch all the threads
     launch_scanners(n_scanners);
     launch_analyzers(n_analyzers);
 
@@ -130,7 +135,10 @@ int main(int argc, char* argv[]){
 
         pthread_t* thread;
         while ((thread = list_pop(term_queue.list)) == NULL){
-            pthread_cond_wait(&term_queue.push_cond, &term_queue.mutex);
+
+            pthread_cond_wait
+                (&term_queue.push_cond, &term_queue.mutex);
+
         }
 
         PT_CHK(pthread_mutex_unlock(&term_queue.mutex));
