@@ -134,43 +134,63 @@ void explore_folder(const char* folder){
     if (closedir(d) == -1) fail("closedir");
 }
 
-void copy_dir(char* path){
-    char* folder = change_base(path, SENV.source, SENV.destination); 
-    if (folder == NULL) fail("change_base"); 
-  
-    if (SENV.debug_opt == 1){
-        printf("Creating directory %s\n",folder);
-        free(folder);
-        return;
-    }
+
+
+/**
+ * Creates an empty copy of a directory having the
+ * same permissions.
+ * @param scr Path to the folder to copy
+ * @param dest Destination of the copy
+ */
+void copy_dir(const char* src, const char* dest){
 
     struct stat buf;
-    if (lstat(path, &buf) == -1) fail("lstat");
+    if (lstat(src, &buf) == -1) fail("lstat");
 
     mode_t perms = buf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
-    if (mkdir(folder,perms) == -1) fail("mkdir");
-
-    free(folder);
+    if (mkdir(dest, perms) == -1) fail("mkdir");
 }
 
+
+
+/**
+ * Entry point of a scanner
+ */
 void* scanner(void* arg){
     // Get a folder
-    char* folder;
+    char *folder, *copy;
     while ((folder = pop_folder()) != NULL){
-        copy_dir(folder);
+
+        copy = change_base(folder, SENV.source, SENV.destination); 
+        if (copy == NULL) fail("change_base"); 
+      
+        if (SENV.debug_opt == 1){
+            printf("Creating directory %s\n",copy);
+            free(copy); free(folder);
+            continue; 
+        }
+
+        copy_dir(folder, copy);
         explore_folder(folder);
-        free(folder);
+        free(folder); free(copy);
     }
+
     signal_term();    
     return (void*) 0; 
 }
 
+
+
+/** 
+ * Launch a certain naumber of threads scanners. 
+ * @param n_scanners The number of scanners to be launched
+ */
 void launch_scanners(unsigned int n_scanners){
     int i; 
     for (i=0; i<n_scanners; i++){
         int e;
         pthread_t thread; 
-        if ((e = pthread_create(&thread, NULL, scanner, (void*) i)) != 0){
+        if ((e = pthread_create(&thread, NULL, scanner, NULL)) != 0){
             errno = e;
             fail("pthread_create");
         }
