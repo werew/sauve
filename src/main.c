@@ -9,12 +9,37 @@
 #include "scanner.h"
 #include "analyzer.h"
 
-void usage(const char* name, int exit_value){
+/**
+ * Prints some information about the usage of the program
+ * @param name Name of the executable
+ * @param exit_value Exit value of the program
+ * @param help Print of not the help
+ */
+void usage(const char* name, int exit_value, int help){
     printf("usage: %s [-h] [-n] [-s n] [-a n] [-f n] "
            "source [previous] destination\n",name);
+    if (help == 1) {
+        printf( "\n"
+                "-h             Shows this help\n"
+                "-n             Execute in debug mode\n"
+                "-s             Number of scanners\n"
+                "-a             Number of analyzers\n"
+                "-f             Max number of files into the buffer\n"
+                "\n"
+        );
+    }
+        
     exit(exit_value);
 }
 
+
+
+/**
+ * Initialize all the queues used by the program 
+ * @param n_scanners Number of scanners
+ * @param n_analyzers Number of analyzers
+ * @param max_buff_entries Limit of files inside the buffer
+ */
 void init_queues
 (unsigned int n_scanners, unsigned int n_analyzers,
  unsigned int max_buff_entries){
@@ -62,7 +87,7 @@ int main(int argc, char* argv[]){
     int opt;
     while ((opt = getopt (argc, argv, "hns:a:f:")) != -1){
         switch (opt){
-            case 'h': usage(argv[0], 0);
+            case 'h': usage(argv[0], 0, 1);
                 break;
             case 'n': SENV.debug_opt = 1;
                 break;
@@ -72,7 +97,7 @@ int main(int argc, char* argv[]){
                 break ;
             case 'f': max_buff_entries = atoi(optarg); // TODO atoi
                 break ;
-            default: usage(argv[0], 1);
+            default: usage(argv[0], 1, 0);
         }
     }
 
@@ -88,7 +113,7 @@ int main(int argc, char* argv[]){
             SENV.previous = argv[optind+1];
             SENV.destination = argv[optind+2];
             break ;
-        default : usage(argv[0], 1);
+        default : usage(argv[0], 1, 0);
     }
 
 
