@@ -5,14 +5,14 @@
 1.1 Scanners 
 
 Un thread de type "scanner" peut/doit se terminer lorsque le
-traitement de tous les répertoires de l'arborescence a été termine, ce
+traitement de tous les répertoires de l'arborescence a été terminé, ce
 qui se traduit par l'état suivant: le buffer des répertoires est vide
 et n'est pas susceptible d'être rempli.  Cet état se vérifie lorsque
 ces deux conditions sont satisfaites:
 
     - le buffer des répertoires ne contiens aucune entrée à traiter
 
-    - tous les autres threads "scanner" se sont terminé ou sont
+    - tous les autres threads "scanner" se sont terminés ou sont
       inactifs (ne sont pas en train de traiter des répertoires)
 
 La deuxième condition assure qu'aucun nouveau répertoire puisse être
@@ -22,15 +22,15 @@ mis dans le buffer.
 1.2 Analyzer 
 
 La condition d'arrêt des threads de type "analyzer" est très proche de
-cela des "scanners". Un "analyzer" peut/doit se terminer lorsque le
+celle des "scanners". Un "analyzer" peut/doit se terminer lorsque le
 traitement de tous les fichiers et répertoires de l'arborescence a été
 terminé, ce qui se traduit par l'état suivant: le buffer des fichiers
 est vide et n'est pas susceptible d'être rempli.  Cet état se vérifie
 lorsque ces deux conditions sont satisfaites:
 
-    - le buffer des fichiers ne contiens aucun entré à traiter
+    - le buffer des fichiers ne contiens aucune entrée à traiter
 
-    - les threads "scanner" ont terminé le traitement de tous les
+    - les threads "scanner" ont terminés le traitement de tous les
       répertoires de l'arborescence
 
 La deuxième condition est satisfaite lorsque les conditions d'arrêt
@@ -44,16 +44,16 @@ nouveau fichier puisse être mis dans le buffer.
 
 Le programme utilise trois FIFO:
 
-    - folders_queue: une liste chainée contenant les répertoires a
-      traité
+    - folders_queue: une liste chainée contenant les répertoires à
+      traiter
  
-    - files_queue: un buffer circulaire contenant les fichiers a
-      traité
+    - files_queue: un buffer circulaire contenant les fichiers à
+      traiter
 
     - term_queue: une liste chainée contenant les Ids des threads
       terminés
 
-À chacune de ces FIFO est associe un mutex et une ou plusieurs
+À chacune de ces FIFO est associé un mutex et une ou plusieurs
 conditions pour en garantir l'accès synchronisé.
 
 
@@ -63,7 +63,7 @@ L'accès (en lecture ou écriture) à ces listes est soumis à
 l'utilisation d'un mutex. Dans le cas d'un accès en lecture, si la
 liste est vide le lecteur doit attendre une condition afin d'être
 notifié lors d'une adjonction dans la liste. Après chaque adjonction
-un écrivain doit de son cote notifier un des lecteurs en attende par
+un écrivain doit de son côté notifier un des lecteurs en attente par
 le biais d'un signal sur la condition. L'algorithme peut être ainsi
 résumé:
 
@@ -86,13 +86,14 @@ résumé:
 
 2.1.2 Buffer circulaire: files_queue
 
-Étant donné que la taille d'un buffer circulaire est limité, l'accès
+Étant donné que la taille d'un buffer circulaire est limitée, l'accès
 synchronisé à cette structure de données comporte une légère
 différence par rapport aux FIFO qu'on a vu avant.  Cette fois-ci un
-écrivain peut devoir attendre si le buffer est plein.  L'algorithme
-est donc le même que celui utilisé pour les listes sauf pour une
-condition supplémentaire qui permet à l'écrivain d'attendre quand le
-buffer est plein et être notifié dans le cas un slot du buffer ait été
+écrivain peut avoir à attendre si le buffer est plein.  L'algorithme
+est donc le même que celui utilisé pour les listes sauf qu'il y a une
+condition supplémentaire qui permet à l'écrivain d'attendre lorsque le
+buffer est plein, et d'être notifié dans le cas où un slot du buffer
+ait été
 libéré. L'algorithme peut être ainsi résumé:
 
 
@@ -123,7 +124,7 @@ libéré. L'algorithme peut être ainsi résumé:
 2.2 Arrêt des threads
 
 Dans la première partie de ce document j'ai présenté les conditions
-d'arrêt de chaque thread, maintenant c'est le moment de voir plus en
+d'arrêt de chaque thread, il est maintenant temps de voir plus en
 détail le mécanisme de synchronisation utilisé dans le programme pour
 mettre en place les principes énoncés dans la première partie.
 
@@ -133,19 +134,19 @@ Un thread de type "scanner" vérifie ses conditions d'arrêt lorsqu'il a
 terminé de traiter un répertoire et est en train de chercher un
 nouveau répertoire à traiter. Pour être en mesure de connaître le
 nombre de scanners actifs on introduit un compteur qui est initialisé
-avec le nombre total des scanners et:
+avec le nombre total des scanners et est:
 
     - décrémenté lorsqu'un scanner est en train de chercher un
       répertoire
-    - incrémenté lorsqu'un scanner a obtenu un nouveau répertoire a
-      traité
+    - incrémenté lorsqu'un scanner a obtenu un nouveau répertoire à
+      traiter
 
 
 
 Pour garantir la terminaison de tous les scanners, le premier scanner
 à se terminer doit "libérer" tous les scanners inactives (en attende
-de recevoir un répertoire) par le biais d'un signal.  L'algorithme à
-la lecture d'un répertoire peut être ainsi résumé;
+de recevoir un répertoire) par le biais d'un signal.  L'algorithme de
+lecture d'un répertoire peut être ainsi résumé;
 
     Obtenir repertoire ( queue ): 
         Lock queue.mutex
@@ -168,16 +169,16 @@ la lecture d'un répertoire peut être ainsi résumé;
 2.2.2 Analyzer
 
 Pour tester ses conditions d'arrêt un analyzer doit pouvoir vérifier
-si les scanners ont terminé le traité tous les répertoires. Pour cette
-raison on introduit une variable qui indique si le traitement des
+si les scanners ont terminés de traiter tous les répertoires. Pour
+cela on introduit une variable qui indique si le traitement des
 répertoires a été complété et donc si le buffer des fichiers peut
 recevoir ou non des nouveaux fichiers dans le futur. Cette variable
 est initialisée à 1 et mise à 0 par les scanners lorsque le traitement
-des répertoires a été terminé. Pour garantir la terminaison de toutes
+des répertoires a été terminé. Pour garantir la terminaison de touts
 les analyzers, le premier scanner à se terminer doit "libérer" tous
-les analyzers en attende de recevoir un fichier par le biais d'un
-signal. Après cette considération le nouvel algorithme à la lecture
-d'un répertoire sera le suivant:
+les analyzers en attende de rececption d'un fichier, par le biais d'un
+signal. Après cette considération le nouvel algorithme de lecture
+d'un répertoire serait le suivant:
 
     Notifier analyzers (queue_files): 
         Lock queue_files
