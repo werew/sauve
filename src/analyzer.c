@@ -56,7 +56,11 @@ int try_link(const char* src, const char* dest, struct stat* buf_src){
 
     // Get some infos about the previous copy
     struct stat buf_prv;
-    if (lstat(prev, &buf_prv) == -1) fail("lstat");
+    if (lstat(prev, &buf_prv) == -1){
+        if (errno != ENOENT) fail("lstat");
+        free(prev);
+        return 0;
+     }
 
     // Compare source file with previous copy
     if (buf_src->st_mode  != buf_prv.st_mode  ||
